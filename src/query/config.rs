@@ -1,4 +1,4 @@
-use crate::{error::ContractError, msg::ConfigResponse, state::storage::CONFIG};
+use crate::{error::ContractError, msg::ConfigResponse, state::CONFIG};
 
 use super::ReadonlyContext;
 

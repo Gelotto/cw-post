@@ -1,12 +1,9 @@
-use crate::{
-    error::ContractError,
-    state::{models::Config, storage::CONFIG},
-};
+use crate::{error::ContractError, models::Config, state::CONFIG};
 use cosmwasm_std::{attr, Response};
 
 use super::Context;
 
-pub fn exec_set_config(
+pub fn exec_configure(
     ctx: Context,
     config: Config,
 ) -> Result<Response, ContractError> {
