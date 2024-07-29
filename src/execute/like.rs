@@ -2,8 +2,8 @@ use crate::{
     error::ContractError,
     msg::LikeMsg,
     state::{
-        NodeHeader, CONFIG, IX_ADDR_LIKED_ID, IX_LIKED_ID_ADDR, IX_RANKED_PARENT_CHILD_ID, IX_TAG_NODE_ID, NODE_HEADER,
-        NODE_NUM_LIKES, NODE_TAGS,
+        NodeHeader, CONFIG, IX_ADDR_2_LIKED_ID, IX_LIKED_ID_2_ADDR, IX_PARENT_2_RANKED_CHILD_ID, IX_TAG_2_NODE_ID,
+        NODE_HEADER, NODE_NUM_LIKES, NODE_TAGS,
     },
 };
 use cosmwasm_std::Response;
@@ -26,14 +26,14 @@ pub fn exec_toggle_like(
     // Currently number of likes received by the node
     let n_likes = NODE_NUM_LIKES.may_load(deps.storage, &node_id)?.unwrap_or_default();
 
-    if IX_ADDR_LIKED_ID.has(deps.storage, (&info.sender, &node_id)) {
+    if IX_ADDR_2_LIKED_ID.has(deps.storage, (&info.sender, &node_id)) {
         // Sender already liked, so we unlike. Decrement or remove state data
-        IX_LIKED_ID_ADDR.remove(deps.storage, (&node_id, &info.sender));
+        IX_LIKED_ID_2_ADDR.remove(deps.storage, (&node_id, &info.sender));
         if n_likes > u32::MIN {
             let next_n_likes = n_likes - 1;
-            IX_RANKED_PARENT_CHILD_ID.remove(deps.storage, (&parent_id, n_likes, &node_id));
+            IX_PARENT_2_RANKED_CHILD_ID.remove(deps.storage, (&parent_id, n_likes, &node_id));
             if next_n_likes > 0 {
-                IX_RANKED_PARENT_CHILD_ID.save(deps.storage, (&parent_id, next_n_likes, &node_id), &0)?;
+                IX_PARENT_2_RANKED_CHILD_ID.save(deps.storage, (&parent_id, next_n_likes, &node_id), &0)?;
                 NODE_NUM_LIKES.save(deps.storage, &node_id, &next_n_likes)?;
             } else {
                 NODE_NUM_LIKES.remove(deps.storage, &node_id);
@@ -41,15 +41,15 @@ pub fn exec_toggle_like(
         }
     } else {
         // Sender is liking
-        IX_LIKED_ID_ADDR.save(deps.storage, (&node_id, &info.sender), &0)?;
+        IX_LIKED_ID_2_ADDR.save(deps.storage, (&node_id, &info.sender), &0)?;
         if n_likes < u32::MAX {
             let next_n_likes = n_likes + 1;
-            IX_RANKED_PARENT_CHILD_ID.remove(deps.storage, (&parent_id, n_likes, &node_id));
-            IX_RANKED_PARENT_CHILD_ID.save(deps.storage, (&parent_id, next_n_likes, &node_id), &0)?;
+            IX_PARENT_2_RANKED_CHILD_ID.remove(deps.storage, (&parent_id, n_likes, &node_id));
+            IX_PARENT_2_RANKED_CHILD_ID.save(deps.storage, (&parent_id, next_n_likes, &node_id), &0)?;
 
             for tag in NODE_TAGS.load(deps.storage, &node_id)?.iter() {
-                IX_TAG_NODE_ID.remove(deps.storage, (tag, n_likes, &node_id));
-                IX_TAG_NODE_ID.save(deps.storage, (tag, next_n_likes, &node_id), &0)?;
+                IX_TAG_2_NODE_ID.remove(deps.storage, (tag, n_likes, &node_id));
+                IX_TAG_2_NODE_ID.save(deps.storage, (tag, next_n_likes, &node_id), &0)?;
             }
 
             NODE_NUM_LIKES.save(deps.storage, &node_id, &next_n_likes)?;

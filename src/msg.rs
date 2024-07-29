@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Uint128};
+use cosmwasm_std::{Addr, Uint128, Uint64};
 
 use crate::models::{Config, Link, Node};
 
@@ -22,16 +22,17 @@ pub enum ExecuteMsg {
 
 #[cw_serde]
 pub enum NodesQueryMsg {
-    ByParentId(NodesByIdQueryArgs),
-    ById(NodesByParentIdQueryArgs),
+    ByParentId(NodesByParentIdQueryArgs),
+    ByIds(NodesByIdQueryArgs),
     ByTag(NodesByTagQueryArgs),
 }
 
 #[cw_serde]
 pub enum QueryMsg {
-    Config {},
+    Info {},
     Cost(CostQueryArgs),
     Nodes(NodesQueryMsg),
+    Chat(ChatQueryArgs),
 }
 
 #[cw_serde]
@@ -56,6 +57,13 @@ pub enum ReactMsg {
 
 pub type ReplyMsg = NodeInitArgs;
 pub type LikeMsg = TipMsg;
+
+#[cw_serde]
+pub struct ChatQueryArgs {
+    pub limit: u8,
+    pub desc: Option<bool>,
+    pub cursor: Option<String>,
+}
 
 #[cw_serde]
 pub struct NodesByIdQueryArgs {
@@ -114,6 +122,12 @@ pub struct NodesPaginationResponse {
 }
 
 #[cw_serde]
+pub struct ChatPaginationResponse {
+    pub cursor: Option<String>,
+    pub nodes: Vec<Node>,
+}
+
+#[cw_serde]
 pub struct NodeCostSubtotals {
     pub creation: Uint128,
     pub body: Uint128,
@@ -122,9 +136,11 @@ pub struct NodeCostSubtotals {
 }
 
 #[cw_serde]
-pub struct RootResponse {
-    pub root: Node,
-    pub replies: Vec<Node>,
+pub struct InfoResponse {
+    pub operator: Addr,
+    pub config: Config,
+    pub royalties: Uint128,
+    pub n_nodes: Uint64,
 }
 
 #[cw_serde]

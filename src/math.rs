@@ -2,6 +2,7 @@ use cosmwasm_std::{Int256, OverflowError, OverflowOperation, StdError, Uint128, 
 
 use crate::error::ContractError;
 
+#[allow(dead_code)]
 pub fn mul_u256<A: Into<Uint256>, B: Into<Uint256>>(
     a: A,
     b: B,
@@ -11,6 +12,7 @@ pub fn mul_u256<A: Into<Uint256>, B: Into<Uint256>>(
     a.checked_mul(b).map_err(|e| ContractError::Std(StdError::overflow(e)))
 }
 
+#[allow(dead_code)]
 pub fn sub_i256<A: Into<Int256>, B: Into<Int256>>(
     a: A,
     b: B,
@@ -20,6 +22,7 @@ pub fn sub_i256<A: Into<Int256>, B: Into<Int256>>(
     a.checked_sub(b).map_err(|e| ContractError::Std(StdError::overflow(e)))
 }
 
+#[allow(dead_code)]
 pub fn add_i256<A: Into<Int256>, B: Into<Int256>>(
     a: A,
     b: B,
@@ -29,6 +32,7 @@ pub fn add_i256<A: Into<Int256>, B: Into<Int256>>(
     a.checked_add(b).map_err(|e| ContractError::Std(StdError::overflow(e)))
 }
 
+#[allow(dead_code)]
 pub fn add_u256<A: Into<Uint256>, B: Into<Uint256>>(
     a: A,
     b: B,
@@ -38,6 +42,7 @@ pub fn add_u256<A: Into<Uint256>, B: Into<Uint256>>(
     a.checked_add(b).map_err(|e| ContractError::Std(StdError::overflow(e)))
 }
 
+#[allow(dead_code)]
 pub fn sub_u256<A: Into<Uint256>, B: Into<Uint256>>(
     a: A,
     b: B,
@@ -47,6 +52,7 @@ pub fn sub_u256<A: Into<Uint256>, B: Into<Uint256>>(
     a.checked_sub(b).map_err(|e| ContractError::Std(StdError::overflow(e)))
 }
 
+#[allow(dead_code)]
 pub fn div_u256<A: Into<Uint256>, B: Into<Uint256>>(
     numerator: A,
     denominator: B,
@@ -57,6 +63,7 @@ pub fn div_u256<A: Into<Uint256>, B: Into<Uint256>>(
         .map_err(|e| ContractError::Std(StdError::divide_by_zero(e)))
 }
 
+#[allow(dead_code)]
 pub fn add_u128<A: Into<Uint128>, B: Into<Uint128>>(
     a: A,
     b: B,
@@ -66,6 +73,7 @@ pub fn add_u128<A: Into<Uint128>, B: Into<Uint128>>(
     a.checked_add(b).map_err(|e| ContractError::Std(StdError::overflow(e)))
 }
 
+#[allow(dead_code)]
 pub fn sub_u128<A: Into<Uint128>, B: Into<Uint128>>(
     a: A,
     b: B,
@@ -75,6 +83,7 @@ pub fn sub_u128<A: Into<Uint128>, B: Into<Uint128>>(
     a.checked_sub(b).map_err(|e| ContractError::Std(StdError::overflow(e)))
 }
 
+#[allow(dead_code)]
 pub fn mul_u128<A: Into<Uint128>, B: Into<Uint128>>(
     a: A,
     b: B,
@@ -84,6 +93,7 @@ pub fn mul_u128<A: Into<Uint128>, B: Into<Uint128>>(
     a.checked_mul(b).map_err(|e| ContractError::Std(StdError::overflow(e)))
 }
 
+#[allow(dead_code)]
 pub fn div_u128<A: Into<Uint128>, B: Into<Uint128>>(
     numerator: A,
     denominator: B,
@@ -94,6 +104,7 @@ pub fn div_u128<A: Into<Uint128>, B: Into<Uint128>>(
         .map_err(|e| ContractError::Std(StdError::divide_by_zero(e)))
 }
 
+#[allow(dead_code)]
 pub fn mul_ratio_u128<A: Into<Uint128>, B: Into<Uint128>, C: Into<Uint128>>(
     base: A,
     numerator: B,
@@ -106,6 +117,7 @@ pub fn mul_ratio_u128<A: Into<Uint128>, B: Into<Uint128>, C: Into<Uint128>>(
         .map_err(|e| ContractError::Std(StdError::generic_err(e.to_string())))
 }
 
+#[allow(dead_code)]
 pub fn sub_u64<A: Into<Uint64>, B: Into<Uint64>>(
     a: A,
     b: B,
@@ -115,6 +127,7 @@ pub fn sub_u64<A: Into<Uint64>, B: Into<Uint64>>(
     a.checked_sub(b).map_err(|e| ContractError::Std(StdError::overflow(e)))
 }
 
+#[allow(dead_code)]
 pub fn add_u64<A: Into<Uint64>, B: Into<Uint64>>(
     a: A,
     b: B,
@@ -124,6 +137,7 @@ pub fn add_u64<A: Into<Uint64>, B: Into<Uint64>>(
     a.checked_add(b).map_err(|e| ContractError::Std(StdError::overflow(e)))
 }
 
+#[allow(dead_code)]
 pub fn sub_u32(
     a: u32,
     b: u32,
@@ -135,6 +149,7 @@ pub fn sub_u32(
     })
 }
 
+#[allow(dead_code)]
 pub fn add_u32(
     a: u32,
     b: u32,

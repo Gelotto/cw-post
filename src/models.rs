@@ -11,8 +11,11 @@ pub enum NodeStatus {
 
 #[cw_serde]
 pub struct Config {
+    /// The token type used for payments & fees
     pub token: Token,
+    /// Address to send fees to
     pub fee_recipient: Option<Addr>,
+    /// Prices and fee rates for various actions
     pub fees: FeeParams,
 }
 
@@ -35,18 +38,30 @@ pub struct FeeParams {
 #[cw_serde]
 pub struct Node {
     pub id: String,
-    pub parent_id: String,
-    pub n_replies: u16,
-    pub n_reactions: u16,
-    pub royalties: Uint128,
-    pub created_by: Addr,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
-    pub title: String,
-    pub body: Option<String>,
-    pub links: Vec<Link>,
-    pub tags: Vec<String>,
+    /// Biz logic status of node
     pub status: NodeStatus,
+    /// Parent node ID
+    pub parent_id: String,
+    /// Number of child nodes
+    pub n_replies: u16,
+    /// Number of reactions to the node
+    pub n_reactions: u16,
+    /// Total tip amount received by node creator
+    pub royalties: Uint128,
+    /// Account that created the node
+    pub created_by: Addr,
+    /// Block time on creation
+    pub created_at: Timestamp,
+    /// Block time when last edited by creator
+    pub updated_at: Timestamp,
+    /// HTML title of the post
+    pub title: String,
+    /// HTML body of the post
+    pub body: Option<String>,
+    /// URL links associated with the post
+    pub links: Vec<Link>,
+    /// Tags associated with the post
+    pub tags: Vec<String>,
 }
 
 #[cw_serde]

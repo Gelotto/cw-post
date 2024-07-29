@@ -1,7 +1,6 @@
-pub mod config;
 pub mod cost;
+pub mod info;
 pub mod nodes;
-pub mod root;
 
 use cosmwasm_std::{Deps, Env};
 

@@ -19,22 +19,24 @@ pub const OPERATOR: Item<Addr> = Item::new("op");
 pub const CONFIG: Item<Config> = Item::new("config");
 pub const CREATED_BY: Item<Addr> = Item::new("created_by");
 pub const CREATED_AT: Item<Timestamp> = Item::new("created_at");
+pub const ROYALTIES: Item<Uint128> = Item::new("royalties");
 pub const COUNTERS: Map<&str, Uint64> = Map::new("counters");
-pub const TOTAL_TIP_AMOUNT: Item<Uint128> = Item::new("total_tip_amount");
-pub const NODE_STATUS: Map<&String, NodeStatus> = Map::new("node_status");
+
 pub const NODE_HEADER: Map<&String, NodeHeader> = Map::new("nh");
+pub const NODE_STATUS: Map<&String, NodeStatus> = Map::new("node_status");
 pub const NODE_ATTRS: Map<&String, NodeAttributes> = Map::new("node_attrs");
 pub const NODE_TAGS: Map<&String, Vec<String>> = Map::new("node_tags");
 pub const NODE_UPDATED_AT: Map<&String, Timestamp> = Map::new("node_t_updated");
 pub const NODE_NUM_REPLIES: Map<&String, u16> = Map::new("n_replies");
 pub const NODE_NUM_REACTIONS: Map<&String, u16> = Map::new("n_reacts");
 pub const NODE_NUM_LIKES: Map<&String, u32> = Map::new("n_likes");
-pub const NODE_TOTAL_TIP_AMOUNT: Map<&String, Uint128> = Map::new("tip_totals");
-pub const IX_PARENT_CHILD_ID: Map<(&String, &String), u8> = Map::new("npc");
-pub const IX_RANKED_PARENT_CHILD_ID: Map<(&String, u32, &String), u8> = Map::new("nrpc");
-pub const IX_ADDR_LIKED_ID: Map<(&Addr, &String), u8> = Map::new("ali");
-pub const IX_LIKED_ID_ADDR: Map<(&String, &Addr), u8> = Map::new("lai");
-pub const IX_TAG_NODE_ID: Map<(&String, u32, &String), u8> = Map::new("tni");
+pub const NODE_ROYALTIES: Map<&String, Uint128> = Map::new("node_royalties");
+
+pub const IX_PARENT_2_CHILD_ID: Map<(&String, &String), u8> = Map::new("npc");
+pub const IX_PARENT_2_RANKED_CHILD_ID: Map<(&String, u32, &String), u8> = Map::new("nrpc");
+pub const IX_ADDR_2_LIKED_ID: Map<(&Addr, &String), u8> = Map::new("ali");
+pub const IX_LIKED_ID_2_ADDR: Map<(&String, &Addr), u8> = Map::new("lai");
+pub const IX_TAG_2_NODE_ID: Map<(&String, u32, &String), u8> = Map::new("tni");
 
 #[cw_serde]
 pub struct NodeHeader {
@@ -65,7 +67,8 @@ pub fn init(
 
     CREATED_AT.save(deps.storage, &env.block.time)?;
     CREATED_BY.save(deps.storage, &info.sender)?;
-    TOTAL_TIP_AMOUNT.save(deps.storage, &Uint128::zero())?;
+    ROYALTIES.save(deps.storage, &Uint128::zero())?;
+    COUNTERS.save(deps.storage, NUM_NODES_COUNTER_KEY, &Uint64::zero())?;
     CONFIG.save(deps.storage, &config)?;
     OPERATOR.save(
         deps.storage,
@@ -96,8 +99,8 @@ pub fn init_node(
     let node_id = increment_counter(store, NODE_ID_COUNTER_KEY, 1u64)?.to_string();
 
     // Save entry in table for looking up child ID's given parent ID
-    IX_PARENT_CHILD_ID.save(store, (&"".to_owned(), &node_id), &0)?;
-    IX_RANKED_PARENT_CHILD_ID.save(store, (&"".to_owned(), 0, &node_id), &0)?;
+    IX_PARENT_2_CHILD_ID.save(store, (&args.parent_id, &node_id), &0)?;
+    IX_PARENT_2_RANKED_CHILD_ID.save(store, (&args.parent_id, 0, &node_id), &0)?;
 
     // Save node data that's frequently loaded by biz logic
     NODE_HEADER.save(
@@ -112,8 +115,10 @@ pub fn init_node(
 
     // Save data that changes on specific executions
     NODE_UPDATED_AT.save(store, &node_id, &time)?;
-    NODE_NUM_REPLIES.save(store, &args.parent_id, &0)?;
     NODE_STATUS.save(store, &node_id, &NodeStatus::Normal)?;
+    NODE_NUM_REPLIES.update(store, &args.parent_id, |n| -> Result<_, ContractError> {
+        Ok(n.unwrap_or_default() + 1)
+    })?;
 
     // Save node data that only changes on user edits
     let node_data = NodeAttributes {
@@ -132,7 +137,7 @@ pub fn init_node(
     // Insert entries in lookup table used for finding nodes by tag
     for tag in tags.iter() {
         let tag = tag.to_lowercase();
-        IX_TAG_NODE_ID.save(store, (&tag, 0, &node_id), &0)?;
+        IX_TAG_2_NODE_ID.save(store, (&tag, 0, &node_id), &0)?;
     }
 
     Ok(())

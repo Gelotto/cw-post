@@ -3,7 +3,7 @@ use crate::{
     math::{add_u128, mul_ratio_u128},
     models::{Config, FeeParams},
     msg::TipMsg,
-    state::{NodeHeader, CONFIG, NODE_HEADER, NODE_TOTAL_TIP_AMOUNT, TOTAL_TIP_AMOUNT},
+    state::{NodeHeader, CONFIG, NODE_HEADER, NODE_ROYALTIES, ROYALTIES},
 };
 use cosmwasm_std::{attr, Addr, Response, Storage, Uint128};
 
@@ -40,10 +40,10 @@ pub fn apply_tip_if_exists(
     node_id: &String,
 ) -> Result<Response, ContractError> {
     // Increment aggregate total tip amount
-    TOTAL_TIP_AMOUNT.update(store, |n| -> Result<_, ContractError> { add_u128(n, tip_amount) })?;
+    ROYALTIES.update(store, |n| -> Result<_, ContractError> { add_u128(n, tip_amount) })?;
 
     // Increment node-specific tip amount
-    NODE_TOTAL_TIP_AMOUNT.update(store, node_id, |n| -> Result<_, ContractError> {
+    NODE_ROYALTIES.update(store, node_id, |n| -> Result<_, ContractError> {
         add_u128(n.unwrap_or_default(), tip_amount)
     })?;
 

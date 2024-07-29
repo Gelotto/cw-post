@@ -1,16 +1,19 @@
 use std::marker::PhantomData;
 
-use cosmwasm_std::{Order, StdResult, Storage};
+use cosmwasm_std::{Order, StdResult, Storage, Uint64};
 use cw_storage_plus::Bound;
 
 use crate::{
     error::ContractError,
     models::Node,
-    msg::{NodesByIdQueryArgs, NodesByParentIdQueryArgs, NodesByTagQueryArgs, NodesPaginationResponse, OrderBy},
+    msg::{
+        ChatPaginationResponse, ChatQueryArgs, NodesByIdQueryArgs, NodesByParentIdQueryArgs, NodesByTagQueryArgs,
+        NodesPaginationResponse, OrderBy,
+    },
     state::{
-        NodeAttributes, NodeHeader, IX_PARENT_CHILD_ID, IX_RANKED_PARENT_CHILD_ID, IX_TAG_NODE_ID, NODE_ATTRS,
-        NODE_HEADER, NODE_NUM_REACTIONS, NODE_NUM_REPLIES, NODE_STATUS, NODE_TAGS, NODE_TOTAL_TIP_AMOUNT,
-        NODE_UPDATED_AT,
+        NodeAttributes, NodeHeader, COUNTERS, IX_PARENT_2_CHILD_ID, IX_PARENT_2_RANKED_CHILD_ID, IX_TAG_2_NODE_ID,
+        NODE_ATTRS, NODE_HEADER, NODE_NUM_REACTIONS, NODE_NUM_REPLIES, NODE_ROYALTIES, NODE_STATUS, NODE_TAGS,
+        NODE_UPDATED_AT, NUM_NODES_COUNTER_KEY,
     },
 };
 
@@ -19,7 +22,7 @@ use super::ReadonlyContext;
 pub const MAX_LIMIT: u8 = 50;
 
 /// Query nodes by ID or by parent ID
-pub fn query_nodes_by_id(
+pub fn query_nodes_by_ids(
     ctx: ReadonlyContext,
     params: NodesByIdQueryArgs,
 ) -> Result<NodesPaginationResponse, ContractError> {
@@ -116,7 +119,7 @@ pub fn query_nodes_by_parent_id(
                     (min_bound, max_bound, order)
                 };
 
-                for result in IX_PARENT_CHILD_ID
+                for result in IX_PARENT_2_CHILD_ID
                     .prefix(&parent_id)
                     .keys(deps.storage, min_bound, max_bound, order)
                     .collect::<Vec<StdResult<_>>>()
@@ -134,9 +137,9 @@ pub fn query_nodes_by_parent_id(
                 // Get next cursor to return
                 if let Some(u) = nodes.last() {
                     let ((_, final_child_id), _) = if params.desc {
-                        IX_PARENT_CHILD_ID.last(deps.storage)
+                        IX_PARENT_2_CHILD_ID.last(deps.storage)
                     } else {
-                        IX_PARENT_CHILD_ID.first(deps.storage)
+                        IX_PARENT_2_CHILD_ID.first(deps.storage)
                     }?
                     .unwrap();
 
@@ -186,7 +189,7 @@ pub fn query_nodes_by_parent_id(
 
                 let mut tail_child_rank = 0u32;
 
-                for result in IX_RANKED_PARENT_CHILD_ID
+                for result in IX_PARENT_2_RANKED_CHILD_ID
                     .keys(deps.storage, min_bound, max_bound, order)
                     .collect::<Vec<StdResult<_>>>()
                 {
@@ -207,9 +210,9 @@ pub fn query_nodes_by_parent_id(
                 // Get next cursor to return
                 if let Some(u) = nodes.last() {
                     let ((_, _, final_child_id), _) = if params.desc {
-                        IX_RANKED_PARENT_CHILD_ID.last(deps.storage)
+                        IX_PARENT_2_RANKED_CHILD_ID.last(deps.storage)
                     } else {
-                        IX_RANKED_PARENT_CHILD_ID.first(deps.storage)
+                        IX_PARENT_2_RANKED_CHILD_ID.first(deps.storage)
                     }?
                     .unwrap();
 
@@ -267,7 +270,7 @@ pub fn query_nodes_by_tag(
     // Build return nodes
     let mut nodes: Vec<Node> = Vec::with_capacity(limit);
 
-    for result in IX_TAG_NODE_ID
+    for result in IX_TAG_2_NODE_ID
         .keys(deps.storage, min_bound, max_bound, order)
         .collect::<Vec<StdResult<_>>>()
     {
@@ -299,6 +302,66 @@ pub fn query_nodes_by_tag(
     })
 }
 
+pub fn query_chat(
+    ctx: ReadonlyContext,
+    params: ChatQueryArgs,
+) -> Result<ChatPaginationResponse, ContractError> {
+    let ReadonlyContext { deps, .. } = ctx;
+    let limit = params.limit.min(MAX_LIMIT) as usize;
+    let root_id = "1".to_owned();
+    let n_total_nodes = COUNTERS.load(deps.storage, NUM_NODES_COUNTER_KEY)?.u64();
+
+    let mut nodes: Vec<Node> = Vec::with_capacity(limit);
+
+    let next_cursor: Option<String> = {
+        // Prepare args for Map range
+        if params.desc.unwrap_or_default() {
+            let start_id = params.cursor.unwrap_or("1".to_owned()).parse::<u64>().unwrap();
+            for id in start_id..=n_total_nodes {
+                let header = NODE_HEADER.load(deps.storage, &id.to_string())?;
+                if let Some(node) = build_node(deps.storage, header)? {
+                    nodes.push(node);
+                }
+                if nodes.len() == limit {
+                    break;
+                }
+            }
+        } else {
+            let start_id = params
+                .cursor
+                .unwrap_or(n_total_nodes.to_string())
+                .parse::<u64>()
+                .unwrap();
+            for id in (1..start_id).rev() {
+                let header = NODE_HEADER.load(deps.storage, &id.to_string())?;
+                if let Some(node) = build_node(deps.storage, header)? {
+                    nodes.push(node);
+                }
+                if nodes.len() == limit {
+                    break;
+                }
+            }
+        };
+
+        // Get next cursor to return. This corresponds to a position in the
+        // provided ID's vec.
+        if let Some(u) = nodes.last() {
+            if nodes.len() < limit {
+                None
+            } else {
+                Some(u.id.clone())
+            }
+        } else {
+            None
+        }
+    };
+
+    Ok(ChatPaginationResponse {
+        cursor: next_cursor,
+        nodes,
+    })
+}
+
 pub fn build_node(
     store: &dyn Storage,
     node_header: NodeHeader,
@@ -309,10 +372,10 @@ pub fn build_node(
         created_by,
     } = node_header;
     let status = NODE_STATUS.load(store, &id)?;
-    let updated_at = NODE_UPDATED_AT.load(store, &id)?;
-    let n_replies = NODE_NUM_REPLIES.load(store, &id)?;
-    let n_reactions = NODE_NUM_REACTIONS.load(store, &id)?;
-    let royalties = NODE_TOTAL_TIP_AMOUNT.load(store, &id)?;
+    let updated_at = NODE_UPDATED_AT.may_load(store, &id)?.unwrap_or_default();
+    let n_replies = NODE_NUM_REPLIES.may_load(store, &id)?.unwrap_or_default();
+    let n_reactions = NODE_NUM_REACTIONS.may_load(store, &id)?.unwrap_or_default();
+    let royalties = NODE_ROYALTIES.may_load(store, &id)?.unwrap_or_default();
     let tags = NODE_TAGS.load(store, &id)?;
     let NodeAttributes {
         created_at,

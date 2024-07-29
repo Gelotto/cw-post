@@ -10,5 +10,7 @@ pub fn exec_delete_node(
     let Context { deps, .. } = ctx;
     let node_id = msg.node_id;
 
+    // TODO
+
     Ok(Response::new().add_attributes(vec![attr("action", "delete")]))
 }
