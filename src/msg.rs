@@ -105,11 +105,12 @@ pub struct CostQueryArgs {
 
 #[cw_serde]
 pub struct NodeInitArgs {
+    pub parent_id: String,
     pub title: String,
     pub body: Option<String>,
     pub links: Option<Vec<Link>>,
     pub tags: Option<Vec<String>>,
-    pub parent_id: String,
+    pub nsfw: Option<bool>,
 }
 
 #[cw_serde]

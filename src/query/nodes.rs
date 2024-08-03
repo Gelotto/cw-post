@@ -382,6 +382,7 @@ pub fn build_node(
         title,
         body,
         links,
+        nsfw,
     } = NODE_ATTRS.load(store, &id)?;
 
     Ok(Some(Node {
@@ -398,5 +399,6 @@ pub fn build_node(
         body,
         links,
         tags,
+        nsfw,
     }))
 }

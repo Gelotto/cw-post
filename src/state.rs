@@ -51,6 +51,7 @@ pub struct NodeAttributes {
     pub title: String,
     pub body: Option<String>,
     pub links: Vec<Link>,
+    pub nsfw: bool,
 }
 
 /// Top-level initialization of contract state
@@ -126,6 +127,7 @@ pub fn init_node(
         created_at: time,
         title: args.title,
         body: args.body,
+        nsfw: args.nsfw.unwrap_or_default(),
     };
 
     NODE_ATTRS.save(store, &node_id, &node_data)?;

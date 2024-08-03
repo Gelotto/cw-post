@@ -62,6 +62,8 @@ pub struct Node {
     pub links: Vec<Link>,
     /// Tags associated with the post
     pub tags: Vec<String>,
+    /// Not Safe For Work flag
+    pub nsfw: bool,
 }
 
 #[cw_serde]
