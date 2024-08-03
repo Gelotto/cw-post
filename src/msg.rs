@@ -1,4 +1,4 @@
-use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Uint128, Uint64};
 
 use crate::models::{Config, Link, Node};
@@ -11,6 +11,7 @@ pub struct InstantiateMsg {
 }
 
 #[cw_serde]
+#[derive(cw_orch::ExecuteFns)]
 pub enum ExecuteMsg {
     Configure(Config),
     Reply(ReplyMsg),
@@ -28,10 +29,15 @@ pub enum NodesQueryMsg {
 }
 
 #[cw_serde]
+#[derive(cw_orch::QueryFns, QueryResponses)]
 pub enum QueryMsg {
+    #[returns(InfoResponse)]
     Info {},
+    #[returns(CostResponse)]
     Cost(CostQueryArgs),
+    #[returns(NodesPaginationResponse)]
     Nodes(NodesQueryMsg),
+    #[returns(ChatPaginationResponse)]
     Chat(ChatQueryArgs),
 }
 
